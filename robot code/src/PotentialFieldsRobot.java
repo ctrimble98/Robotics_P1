@@ -50,6 +50,7 @@ public class PotentialFieldsRobot {
     private double totalWinding;
     private double lastHeading;
     private double headingtoGoal;
+    int freeSpace;
 
     //private Vector lastMove;
 
@@ -109,6 +110,7 @@ public class PotentialFieldsRobot {
         lastHeading = heading;
         headingtoGoal = calculateHeading(goal);
         totalWinding = heading - headingtoGoal;
+        freeSpace = 20;
         if (totalWinding < -1*Math.PI) {
 
             System.out.println("Total - = " + totalWinding);
@@ -360,19 +362,16 @@ public class PotentialFieldsRobot {
         if (moves.isEmpty()) {
             return null;
         }
-        double maxUnwinding = Double.MIN_VALUE;
-        IntPoint maxUnwindingMove = null;
         List<IntPoint> unwindingMoves = new ArrayList<IntPoint>();
-
-        double minWinding = Double.MAX_VALUE;
-        IntPoint minWindingMove = null;
         List<IntPoint> windingMoves = new ArrayList<IntPoint>();
+
+
 
         int obstacleThreshold = 100;
         double winding;
         double currentWinding = Calculator.getTheta(heading, new Vector(coords.x, coords.y), new Vector(goal.x, goal.y));
 
-        //totalWinding += calculateHeading(goal) - headingtoGoal;
+        totalWinding += calculateHeading(goal) - headingtoGoal;
 //        if (totalWinding > 2*Math.PI) {
 //            totalWinding = Math.PI;
 //        }
@@ -385,6 +384,10 @@ public class PotentialFieldsRobot {
         //System.out.println();
         //System.out.println(headingtoGoal/Math.PI);
         System.out.println(totalWinding/Math.PI);
+
+//        if (Calculator.getTheta(heading, new Vector(coords.x, coords.y), new Vector(goal.x, goal.y)) < Math.PI/8 ) {
+//            totalWinding = 0;
+//        }
 //___________________________________________________________________________________________________________________
 //        for (IntPoint move : moves) {
 //
@@ -431,7 +434,29 @@ public class PotentialFieldsRobot {
 //            return windingMoves.get(minIndex(moveValues));
 //        }
 //_______________________________________________________
-        if (Math.abs(totalWinding) < Math.PI/4) {
+
+        boolean inFreeSpace = true;
+        for (IntPoint move: moves) {
+
+            if (getObstaclePotential(move) != 0) {
+                inFreeSpace = false;
+                if (freeSpace >= 20) {
+
+                    totalWinding = heading- headingtoGoal;
+                }
+                freeSpace = 0;
+                break;
+            }
+
+        }
+        if (inFreeSpace) {
+            freeSpace += 1;
+            if (freeSpace < 20) {
+                inFreeSpace = false;
+            }
+        }
+
+        if (inFreeSpace || Math.abs(totalWinding) < Math.PI/4) {
 
             System.out.println("Fractional");
             double[] moveValues = new double[moves.size()];
@@ -447,24 +472,23 @@ public class PotentialFieldsRobot {
             if (getObstaclePotential(move) < obstacleThreshold) {
                 winding = getWinding(move);
                 if (totalWinding < 0) {
+                    //System.out.println("Neg wind");
 
-                    if (winding > 0) {
+                    if (winding < 0) {
 
-                        //System.out.println(move + " = "+  winding/Math.PI);
                         windingMoves.add(move);
                     } else {
 
-                        //System.out.println(move + ""+  winding/Math.PI);
                         unwindingMoves.add(move);
                     }
                 } else {
-                    //System.out.println("<");
+                    //System.out.println("Pos wind");
 
-                    if (winding > 0) {
-                        //System.out.println(move + ""+  winding/Math.PI);
+                    if (winding < 0) {
+
                         unwindingMoves.add(move);
                     } else {
-                        //System.out.println(move + " = "+  winding/Math.PI);
+
                         windingMoves.add(move);
                     }
                 }
@@ -478,8 +502,8 @@ public class PotentialFieldsRobot {
             double[] moveValues = new double[unwindingMoves.size()];
             for (int i = 0; i < unwindingMoves.size(); i++) {
 
-                //moveValues[i] = Math.abs(totalWinding + Calculator.getTheta(heading, new Vector(coords.x, coords.y), new Vector(unwindingMoves.get(i).x, unwindingMoves.get(i).y)));
-                moveValues[i] = evalFractionalProgress(unwindingMoves.get(i), this.goal);
+                moveValues[i] = -1*Math.abs(Calculator.getTheta(heading, new Vector(coords.x, coords.y), new Vector(unwindingMoves.get(i).x, unwindingMoves.get(i).y)));
+                //moveValues[i] = evalFractionalProgress(unwindingMoves.get(i), this.goal);
                 //System.out.println(unwindingMoves.get(i) + " " + getWinding(unwindingMoves.get(i))/Math.PI);
             }
 
