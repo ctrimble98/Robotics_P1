@@ -305,7 +305,7 @@ public class PotentialFieldsRobot {
         double headingChange = getHeadingChangeInterval(theta, arcLength);
 
 //        try {
-//            Thread.sleep(200);
+//            Thread.sleep(100);
 //        } catch (Exception e){}
 
         moveTowards(heading + headingChange);
@@ -318,8 +318,8 @@ public class PotentialFieldsRobot {
 
         ArcSet arcs = get3Arcs(samplePoint, false);
 
-        //double p = distance(start, new IntPoint((int)arcs.firstArc.p2.x, (int)arcs.firstArc.p2.y));
-        double p = arcs.firstArc.arcLength;
+        double p = distance(start, new IntPoint((int)arcs.firstArc.p2.x, (int)arcs.firstArc.p2.y));
+        //Sdouble p = arcs.firstArc.arcLength;
         double f = arcs.secondArc.arcLength + arcs.thirdArc.arcLength + getObstaclePotential(samplePoint);
 
         return f/(p + f);
@@ -329,46 +329,24 @@ public class PotentialFieldsRobot {
 
         double changeInHeading = heading - calculateHeading(samplePoint);
 
-        if (heading < Math.PI/2 && calculateHeading(samplePoint) > 3*Math.PI/2) {
+        if (heading <= Math.PI/2 && calculateHeading(samplePoint) >= 3*Math.PI/2) {
 
-            System.out.print("A");
+            //System.out.print("A");
             changeInHeading = 2*Math.PI + heading - calculateHeading(samplePoint);
         }
-        else if (calculateHeading(samplePoint) < Math.PI/2 && heading > 3*Math.PI/2) {
+        else if (calculateHeading(samplePoint) <= Math.PI/2 && heading >= 3*Math.PI/2) {
 
-            System.out.print("B");
+            //System.out.print("B");
             changeInHeading = heading - (2*Math.PI + calculateHeading(samplePoint));
         }
-//        if (changeInHeading > Math.PI/2) {
-//
-//            System.out.print("A");
-//
-//            //System.out.println("T\n" + changeInHeading);
-////            changeInHeading = 2*Math.PI - changeInHeading;
-//            //changeInHeading = Calculator.mod(Math.PI + changeInHeading, 2*Math.PI);
-//            changeInHeading = Math.PI - changeInHeading;
-//            //System.out.println(changeInHeading + "\n");
+//        double changeInGoalHeading = Calculator.getTheta(calculateHeading(samplePoint), new Vector(samplePoint.x, samplePoint.y), new Vector(goal.x, goal.y)) - headingtoGoal;
+//        if (changeInGoalHeading > Math.PI/2) {
+//            changeInGoalHeading = 2*Math.PI - changeInGoalHeading;
 //        }
-//        else if (changeInHeading < -1*Math.PI/2) {
+//        else if (changeInGoalHeading < -1*Math.PI/2) {
 //
-//            System.out.print("B");
-//
-//            //System.out.println("P\n" + changeInHeading);
-////            changeInHeading = (2*Math.PI + changeInHeading);
-//            changeInHeading = -1*(Math.PI + changeInHeading);
-//
-////            changeInHeading = Calculator.mod(-1*Math.PI + changeInHeading, 2*Math.PI);
-//            //System.out.println(changeInHeading + "\n");
+//            changeInGoalHeading = -1*(2*Math.PI + changeInGoalHeading);
 //        }
-
-        double changeInGoalHeading = Calculator.getTheta(calculateHeading(samplePoint), new Vector(samplePoint.x, samplePoint.y), new Vector(goal.x, goal.y)) - headingtoGoal;
-        if (changeInGoalHeading > Math.PI/2) {
-            changeInGoalHeading = 2*Math.PI - changeInGoalHeading;
-        }
-        else if (changeInGoalHeading < -1*Math.PI/2) {
-
-            changeInGoalHeading = -1*(2*Math.PI + changeInGoalHeading);
-        }
 
         return changeInHeading;
     }
@@ -395,11 +373,17 @@ public class PotentialFieldsRobot {
         double currentWinding = Calculator.getTheta(heading, new Vector(coords.x, coords.y), new Vector(goal.x, goal.y));
 
         //totalWinding += calculateHeading(goal) - headingtoGoal;
+//        if (totalWinding > 2*Math.PI) {
+//            totalWinding = Math.PI;
+//        }
+//        else if (totalWinding < -2*Math.PI){
+//            totalWinding = -1*Math.PI;
+//        }
         lastHeading = heading;
         headingtoGoal = calculateHeading(goal);
 
-        System.out.println();
-        System.out.println(headingtoGoal/Math.PI);
+        //System.out.println();
+        //System.out.println(headingtoGoal/Math.PI);
         System.out.println(totalWinding/Math.PI);
 //___________________________________________________________________________________________________________________
 //        for (IntPoint move : moves) {
@@ -447,8 +431,9 @@ public class PotentialFieldsRobot {
 //            return windingMoves.get(minIndex(moveValues));
 //        }
 //_______________________________________________________
-        if (Math.abs(totalWinding) < Math.PI/8) {
+        if (Math.abs(totalWinding) < Math.PI/4) {
 
+            System.out.println("Fractional");
             double[] moveValues = new double[moves.size()];
             for (int i = 0; i < moves.size(); i++) {
                 moveValues[i] = evalFractionalProgress(moves.get(i), this.goal);
@@ -457,30 +442,29 @@ public class PotentialFieldsRobot {
             totalWinding += getWinding(moves.get(minIndex(moveValues)));
             return moves.get(minIndex(moveValues));
         }
-        System.out.println("No frac" + totalWinding/Math.PI);
         for (IntPoint move: moves) {
 
             if (getObstaclePotential(move) < obstacleThreshold) {
                 winding = getWinding(move);
-                if (totalWinding > 0) {
+                if (totalWinding < 0) {
 
                     if (winding > 0) {
 
-                        System.out.println(move + " = "+  winding/Math.PI);
+                        //System.out.println(move + " = "+  winding/Math.PI);
                         windingMoves.add(move);
                     } else {
 
-                        System.out.println(move + ""+  winding/Math.PI);
+                        //System.out.println(move + ""+  winding/Math.PI);
                         unwindingMoves.add(move);
                     }
                 } else {
                     //System.out.println("<");
 
                     if (winding > 0) {
-                        System.out.println(move + ""+  winding/Math.PI);
+                        //System.out.println(move + ""+  winding/Math.PI);
                         unwindingMoves.add(move);
                     } else {
-                        System.out.println(move + " = "+  winding/Math.PI);
+                        //System.out.println(move + " = "+  winding/Math.PI);
                         windingMoves.add(move);
                     }
                 }
@@ -496,10 +480,10 @@ public class PotentialFieldsRobot {
 
                 //moveValues[i] = Math.abs(totalWinding + Calculator.getTheta(heading, new Vector(coords.x, coords.y), new Vector(unwindingMoves.get(i).x, unwindingMoves.get(i).y)));
                 moveValues[i] = evalFractionalProgress(unwindingMoves.get(i), this.goal);
+                //System.out.println(unwindingMoves.get(i) + " " + getWinding(unwindingMoves.get(i))/Math.PI);
             }
 
-
-            System.out.println(unwindingMoves.get(minIndex(moveValues)) + " " + getWinding(unwindingMoves.get(minIndex(moveValues))));
+            //System.out.println(unwindingMoves.get(minIndex(moveValues)) + " " + getWinding(unwindingMoves.get(minIndex(moveValues)))/Math.PI);
 
             totalWinding += getWinding(unwindingMoves.get(minIndex(moveValues)));
             return unwindingMoves.get(minIndex(moveValues));
